@@ -1,0 +1,586 @@
+
++ Các kiểu Shell trong Unix/Linux
+
+    Trong Unix có hai kiểu Shell chính:
+
+    - Kiểu Bourne Shell. Nếu bạn đang sử dụng một Bourne Shell, dòng nhăc lệnh mặc định là ký tự $.
+        + Bourne Shell (sh)
+        + Korn Shell (ksh)
+        + Bourne Again Shell ( bash)
+        + POSIX Shell ( sh)
+
+    - Kiểu C Shell. Nếu bạn đang sử dụng kiểu C Shell, dòng nhắc mặc định là ký tự %.
+        + C Shell (csh)
+        + TENEX/TOPS C Shell ( tcsh)
+
+    shebang: #!/bin/sh
+    run progarm: ./program_name
+    comment: #
+
++ Lệnh echo: Dùng để hiển thị dòng văn bản, giá trị biến...
+  Cú pháp : echo [options] [chuỗi, biến...]
+
+
++ Lệnh read: Dùng để lấy dữ liệu nhập từ bàn phím và lưu vào biến
+    Cú pháp : read var1 var2 var3 ...varN
+
+  - read không có tham số -> giá trị sẽ được chứa trong biến $REPLY
+  - Bình thường thì dấu \ cho phép xuống dòng để nhập tiếp dữ liệu trong read.
+    Nếu read –r thì sẽ không có ý nghĩa đó.
+
++ Một vài thông tin về dấu ngoặc kép: Có 3 loại dấu sau:
+
+      Dấu       Tên                             Ý nghĩa
+
+      ""       Nháy kép              Bất cứ gì nằm trong dấy nháy kép được xem là những ký tự riêng biệt
+      ''       Nháy đơn              Những gì nằm trong dấu nháy đơn có ý nghĩa không đổi
+      ``       Nháy ngược            Thực thi lệnh
+                                     `command` = $(command)
+
+
+
+/************************************************************************************************
+*                                          PHÂN QUYỀN
+************************************************************************************************/
+   Mọi file trong Unix có các thuộc tính sau để thể hiện quyền hạn truy cập tới nó (File Permission):
+      - Quyền hạn truy cập của người sở hữu (user):    Các ký tự đầu tiên từ 1 đến 3 (2-4 trong dãy kể cả dấu -)
+      - Quyền hạn truy cập nhóm             (group):   Nhóm 3 ký tự tiếp theo từ 5-7 đại diện cho quyền hạn truy cập nhóm
+      - Các quyền hạn truy cập khác         (other):   Nhóm 3 ký tự cuối cùng từ 8-10 đại diện quyền hạn truy cập khác
+
+1. Thay đổi các quyền hạn truy cập file hoặc thư mục: sử dụng lệnh chmod
+  Có 2 cách để sử dụng chmod:
+    + chế độ tượng trưng (Symbolic Mode)
+    + chế độ tuyệt đối (Absolute Mode).
+
+  a) Chế độ tượng trưng:
+        u: user
+        g: group
+        o:  truy cap khac
+
+      Toán tử chmod                   Miêu tả
+          +               Thêm quyền hạn truy cập được chỉ định tới một file hoặc tệp
+          -               Gỡ bỏ quyền hạn truy cập đã được chỉ định từ một file hoặc thư mục
+          =               Thiết lập các quyền hạn truy cập được chỉ định.
+
+      VD: chmod u-x testfile
+          chmod g=rx testfile
+          chmod o+wx testfile
+          chmod o+wx,u-x,g=rx testfile
+
+  b) Chế độ tuyệt đối:
+
+     Số   Đại diện cho quyền hạn truy cập trong hệ cơ số 8              Tham chiếu
+      0      Không cho phép                                                ---
+      1      Cho phép thực thi                                             --x
+      2      Cho phép ghi                                                  -w-
+      4      Cho phép đọc                                                  r--
+
+      3      Cho phép thực thi và ghi: 1 (thực thi) + 2 (ghi) = 3          -wx
+      5      Cho phép đọc và thực thi: 4(đọc) + 1 (thực thi) = 5           r-x
+      6      Cho phép đọc và ghi: 4 (đọc) + 2 (ghi) = 6                    rw-
+      7      Cho phép tất cả: 4 (đọc) + 2 (ghi) + 1 (thực thi) = 7         rwx
+
+    Note: 755, 777,...
+
+2. Thay đổi người sở hữu và nhóm trong Unix/Linux
+    - chown: Lệnh này đại diện cho thay đổi sở hữu cá nhân (change owner).
+    - chgrp: Lệnh này đại diện cho thay đổi sở hữu nhóm (change group).
+
+
+/************************************************************************************************
+*                                      FILTER & PIPE & FIND
+************************************************************************************************/
+1. Pipe:
+    Hai hoặc nhiều lệnh được kết nối với nhau tạo thành một pipe.
+    Cú pháp : command 1 | command 2
+    Output của command1 sẽ là dữ liệu vào của command 2
+
+2. Filter:
+    Khi một chương trình nhận đầu vào từ một chương trình khác, thực hiện một vài hoạt động trên đầu vào đó
+    và ghi kết quả cho đầu ra, nó được đề cập như là một filter.
+
+    - grep : tìm file
+
+    $grep pattern file(s)
+        -v  In tất cả các dòng mà không so khớp với mẫu đã cho.
+        -n  In các dòng được so khớp và số dòng của nó.
+        -l  Chỉ in tên file với các dòng được so khớp.
+        -c  Chỉ in số lượng các dòng được so khớp.
+        -i  So khớp hoặc với chữ hoa hoặc chữ thường.
+
+
+    - sort: sắp xếp các dòng của văn bản theo thứ tự chữ cái hoặc thứ tự số
+
+        -n  Sắp xếp theo thứ tự số, bỏ qua các khoảng trống và các tab.
+        -r  Nghịch đảo thứ tự của sự sắp xếp.
+        -f  Sắp xếp chữ hoa và chữ thường cùng với nhau.
+        +x  Bỏ qua các x trường đầu tiên khi sắp xếp.
+
+
+3. Find
+      wc -l : đếm tổng kết quả tìm đươc
+a) Finding by Name:
+
+      find -name "query"
+      find -iname "query"
+
+      find -not -name "query_to_avoid"
+      find \! -name "query_to_avoid"
+
+b) Finding by Type:
+
+    find -type type_descriptor
+
+        f: regular file
+        d: directory
+        l: symbolic link
+        c: character devices
+        b: block devices
+
+c) Filtering by Depth
+
+    find -maxdepth num -name 'ten_file'
+    find -mindepth num -name 'ten file'
+
+d) Filtering by Size:
+    find -size
+
+        c: bytes
+        k: Kilobytes
+        M: Megabytes
+        G: Gigabytes
+        b: 512-byte blocks
+
+    VD: find / -size 50c        # find all files that are exactly 50 bytes
+        find / -size -50c       # find all files less than 50 bytes
+        find / -size +700M      # find all files more than 700 Megabytes
+
+e) Filtering by Time:
+
+   -atime     Access Time: Last time a file was read or written to.
+   -mtime     Modification Time: Last time the contents of the file were modified.
+   -ctime     Change Time: Last time the file's inode meta-data was changed.
+
+   VD: find / -mtime 1        # find files that have a modification time of a day ago
+       find / -atime -1       # find files that were accessed in less than a day ago
+       find / -ctime +3       # get files that last had their meta information changed more than 3 days ago
+
+
+/************************************************************************************************
+*                                      VARIABLE
+************************************************************************************************/
+
++ Một số quy định về biến trong shell
+    - Không được có khoảng trắng (space) trước và sau dấu bằng khi gán giá trị cho biến.
+    - Biến có phân biệt chữ hoa chữ thường
+    - Không dùng các kí tự đặc biệt ( ?, * , - )  để đặt tên biến.
+
+    - Để truy xuất giá trị biến: dùng tiền tố dollar ( $ ) trước biến
+
+    readonly:   Biến có giá trị ko đổi ( giống const trong C)
+    unset:      Xóa giá trị của biến,mảng
+
++ Các biến đặc biệt:
+     $0      Tên file của script hiện tại.
+
+     $n      Những biến này tương ứng với các tham số mà một script được gọi.
+             Tại đây n là số thập phân nguyên dương tương ứng với vị trí của một tham số
+             (tham số đầu tiên là $1, tham số thứ hai là $2...).
+
+     $#      Số các tham số cung cấp cho một script.
+
+     $*      Tất cả các tham số được trích dẫn kép. Nếu một script nhận hai tham số, $* là tương đương với $1 $2.
+
+     $@      Tất cả các tham số được trích dẫn kép riêng rẽ. Nếu một script nhận 2 tham số, $@ là tương đương với $1 $2.
+
+     $?      Trạng thái thoát ra (exit) của lệnh trước được chạy.
+             ( Cho biết giá trị trả về của lệnh cuối cùng. )
+
+     $$      Số tiến trình của shell hiện tại. Đối với Shell script, đây là số Process ID mà chúng đang chạy.
+
+     $!      Số tiến trình của lệnh background trước.
+
+  NOTE: $* và $@ ,
+       - $* và $@ : xác định tất cả các tham số của dòng lệnh
+           NHƯNG  $* nhận toàn bộ danh sách làm tham số với các khoảng cách trống ở giữa
+                  $@ nhận toàn bộ danh sách làm tham số và phân biệt chúng thành các tham số riêng rẽ.
+
+       - $?: đại diện cho trạng thái thoát của lệnh trước.
+           Trạng thái thoát là một giá trị số trả về bởi mỗi lệnh khi nó hoàn tất.
+                   trả về 0        thực hiện thành công
+                   trả về 1        thực hiện thất bại
+
++ Environment Variable
+
+    $HOME
+    $PATH
+    $PS1
+    $PS2
+    $IPS
+
+  - lệnh env:     show ra các biến môi trường của shell và các application đã installed
+  - lệnh export   để định nghĩa biến môi trường
+
+
+/************************************************************************************************
+*                                      ARRAY
+************************************************************************************************/
++ Cú pháp:
+      array_name=(value1 ... valuen)
+
++ Truy cập từng phần tử trong mảng
+      ${array_name[index]}
+
++ Truy cập tất cả các phần tử trong mảng
+       ${array_name[*]}
+       ${array_name[@]}
+
+/************************************************************************************************
+*                       ARITHMETIC EXPANSION & COMMAND EXECUTION
+************************************************************************************************/
+
++ Gán kết quả của một phép toán cho biến, có hai cách thực hiện:
+    C1:   var=`expr statement`
+
+    C2:   var=$((statement))
+
++ Có hai cách để thực hiện command execution trong shell:
+
+    C1:   `command`
+
+    C2:   $(command)
+
+
+/************************************************************************************************
+*                                   CÁC TOÁN TỬ SHELL
+************************************************************************************************/
+
+NOTE:
+    - Phải có một khoảng trống (space) giữa hai toán tử và 2 sự diễn đạt
+        ví dụ 2+2 là không đúng, nó nên được viết là 2 + 2.
+    - Sự diễn đạt đầy đủ nên được bao quanh bởi ``, gọi là dấu phảy bị nghịch đảo.
+
+1. Toán tử số học:
+
+    +       Phép cộng               `expr $a + $b`
+    -       Phép trừ                `expr $a - $b`
+    *       Phép nhân               `expr $a \* $b`
+    /       Phép chia               `expr $b / $a`
+    %       Lấy số dư               `expr $b % $a`
+    =       Phép gán                a=$b sẽ gán giá trị của b cho a
+    ==      Phép bằng               [ $a == $b ]
+    !=      Phép không cân bằng     [ $a != $b ]
+
+2. Toán tử quan hệ
+    VD: a=10
+        b=20
+
+    TOAN TU                  MIEU TA                                          VI DU
+
+     -eq                (a == b) neu a = b thi dk dung                 [ $a -eq $b ] là không đúng.
+     -ne                (a == b) neu a != b thi dk dung                [ $a -ne $b ] là đúng.
+     -gt                (a > b)                                        [ $a -gt $b ] là không đúng.
+     -lt                (a < b)                                        [ $a -lt $b ] là đúng.
+     -ge                (a >= b)                                       [ $a -ge $b ] là không đúng.
+     -le                (a <= b)                                       [ $a -le $b ] là đúng.
+
+3. Toán tử logic
+    VD: a=10
+        b=20
+
+    TOAN TU                  MIEU TA                                          VI DU
+
+      !             ( NOT ) Phép phủ định.                             [ ! false ] là true.
+     -o             ( OR ) Phép hoặc.                                  [ $a -lt 20 -o $b -gt 100 ] là true.
+     -a             ( AND ) Phep và                                    [ $a -lt 20 -a $b -gt 100 ] là false.
+
+4. Toán tử chuỗi
+
+    VD a giữ giá trị “abc”
+       b giữ giá trị “efg”
+
+    TOAN TU                  MIEU TA                                               VI DU
+
+     =                    ( str(a) == str(b))                          [ $a = $b ] là không đúng.
+    !=                    ( str(a) != str(b))                          [ $a != $b ] là đúng.
+    -z                    ( str == 0 )                                 [ -z $a ] là không đúng.
+    -n                    ( str != 0 )                                 [ -n $a ] là không đúng.
+    str             Kiểm tra nếu str không là chuỗi trống.             [ $a ] là không sai.
+                    Nếu là chuỗi trống thì nó trả về là sai.
+
+
+5. Toán tử kiểm tra file
+
+    TOAN TU                   MIEU TA
+
+    s file                File không rỗng
+   -f file                File tôn tai. Là file , không phải thư muc
+   -e file                Kiểm tra nếu file tồn tại, vẫn đúng ngay cả khi file là một thư mục nhưng tồn tại.
+   -d dir                 Thư mục tôn tai , không phải file.
+   -w file                File ghi đươc
+   -r file                File chi đọc
+   -x file                File co quyền thưc thi
+
+
+/************************************************************************************************
+*                                 ĐIỀU KHIÊN LUỒNG - VÒNG LẶP
+************************************************************************************************/
+
+1. if ...else
+
+    a) if...fi
+
+        if [ bieuThuc ]
+        then
+            cac lenh de thuc thi neu bieuThuc la true
+        fi
+
+    b) if...else...fi
+
+        if [ bieuThuc ]
+        then
+            cac lenh de thuc thi neu bieuThuc la true
+        else
+            cac lenh de thuc thi neu bieuThuc la khong true
+        fi
+
+    c) if...elif...fi
+
+       if [ bieuThuc 1 ]
+       then
+           cac lenh de thuc thi neu bieuThuc 1 la true
+       elif [ bieuThuc 2 ]
+       then
+           cac lenh de thuc thi neu bieuThuc 2 la true
+       elif [ bieuThuc 3 ]
+       then
+           cac lenh de thuc thi neu bieuThuc 3 la true
+       else
+           cac lenh de thuc thi neu khong co bieuThuc nao la true
+       fi
+
+2. case...esac ( giong switch...case)
+
+    case word in
+        pattern1)
+            cac lenh de thuc thi neu ket noi voi pattern1
+        ;;  // giong break
+        pattern2)
+            cac lenh de thuc thi neu ket noi voi pattern2
+        ;;
+        pattern3)
+            cac lenh de thuc thi neu ket noi voi pattern3
+        ;;
+    esac
+
+    - chuỗi word được so sánh với mỗi pattern
+    - Sẽ không giới hạn số lượng các pattern, nhưng số lượng tối thiểu là 1.
+    - Lệnh ;; chỉ dẫn rằng dòng chương trình nên nhảy tới phần cuối của lệnh case. ( giống break trong C)
+
+
+3. Vòng lặp while
+
+    while command
+    do
+        cac lenh de thuc thi neu command la true
+    done
+
+4. Vòng lặp For
+
+    for var in word1 word2 ... wordN
+    do
+        cac lenh de thuc thi cho moi word.
+    done
+
+Trong đó:
+    - var là tên của một biến và word1 tới wordN là dãy các ký tự phân biệt nhau bởi các khoảng trống.
+    - Cứ mỗi lần vòng lặp thực thi, giá trị của biến var được thiết lập tới word tiếp theo trong danh sách các word, từ word1 tới wordN.
+
+5. Vòng lặp until
+
+    until command
+    do
+        cac lenh duoc thuc thi toi khi command la true
+    done
+
+6. Vòng lặp select
+
+    select var in word1 word2 ... wordN
+    do
+        cac lenh de thuc thi cho moi word.
+    done
+
+7. Điều khiển vòng lặp
+
+  + break: sử dụng để thoát khỏi một vòng lặp
+
+  + continue:
+
+/************************************************************************************************
+*                            Shell Substitution - Trình thay thế
+************************************************************************************************/
+
+Shell thực hiện phép thế khi nó gặp một biểu thức mà chứa một hoặc nhiều ký tự đặc biệt.
+
+1. Command Substitution
+    - Trình thay thế lệnh thông thường được sử dụng để gán đầu ra của một lệnh tới một biến.
+    VD:
+        DATE=`date`
+        echo "Date is $DATE"
+
+2. Variable Substitution
+    - Sự thay thế biến cho phép người lập trình Shell thao tác giá trị của biến dựa trên trạng thái của nó.
+
+       Mẫu                                      Miêu tả
+     ${var}                             Thay thế giá trị của var.
+
+     ${var:-word}                       Nếu var là null hoặc unset, thì word được thay thế cho var.
+                                        Giá trị của var không thay đổi.
+
+     ${var:=word}                       Nếu var là null hoặc unset, var được thiết lập là giá trị của word .
+
+     ${var:?message}                    Nếu var là null hoặc unset, message được in là lỗi.
+                                        Lệnh này kiểm tra xem các biến có được thiết lập đúng không.
+
+     ${var:+word}                       Nếu var được thiết lập, word được thay thế cho var. Giá trị của var không thay đổi.
+
+
+/************************************************************************************************
+*                              IO REDIRECTIONS - ĐIỀU HƯỚNG IO
+************************************************************************************************/
+Có 3 ký hiệu redirectionlà >, >> và <
+
+Dưới đây là danh sách đầy đủ các lệnh mà bạn có thể sử dụng cho điều hướng lại:
+
+      Lệnh                               Miêu tả
+    pgm > file                     Đầu ra của pgm được điều hướng tới file.
+                                   Note: Nếu một lệnh có đầu ra được điều hướng lại tới một file
+                                         và file đó đã chứa một vài dữ liệu, thì dữ liệu đó sẽ bị thất lạc
+
+    pgm < file                     Chương trình pgm đọc input từ file.
+
+    pgm >> file                    Đầu ra của pgm được gán tới file.
+
+    n > file                       Đầu ra từ stream với dấu hiệu n được điều hướng tới file.
+
+    n >> file                      Đầu ra từ stream với dấu hiệu n được gán tới file.
+
+    n >& m                         Sáp nhập đầu ra từ stream n với stream m.
+
+    n <& m                         Sáp nhập input từ stream n với stream m.
+
+    << tag                         input tiêu chuẩn xuất phát từ đây qua thẻ tiếp theo tại phần đầu của dòng.
+
+    |                              Nhận đầu ra từ một chương trình hoặc một tiến trình và gửi nó cho chương trình khác..
+
++ Note:
+
+    Ghi chú: dấu hiệu file 0 thường là input tiêu chuẩn (STDIN),
+                           1 thường là đầu ra tiêu chuẩn (STDOUT),
+                           2 thường là đầu ra lỗi tiêu chuẩn (STDERR).
+
+    - 2>&1: Để loại bỏ cả đầu ra của một lệnh và đầu ra bị lỗi của lệnh, bạn sử dụng sự điều hướng lại tiêu chuẩn để điều hướng lại STDERR tới STDOUT.
+            $ command > file 2>&1
+
+    - 1>&2: hiển thị một thông báo trên STDERR bằng điều hướng lại STDIN thành STDERR như sau:
+            $ echo message 1>&2
+
+/************************************************************************************************
+*                                   FUNCITION
+************************************************************************************************/
+  Cu phap :
+    function-name ( )
+    {
+       command1
+       .....
+       ...
+       commandN
+       return
+    }
+
+  hoăc
+
+    function function-name
+    {
+      command1
+      .....
+      ...
+      commandN
+      return
+    }
+
+Trong đo, function-name la tên ham, lênh return se kêt thuc ham.
+  - Goi ham :  function-name
+  - Truyên tham sô : function-name $arg1 $arg2
+  - Lây tham sô truyên vao ham : arg1=$1; arg2=$2
+  - Lây giá tri tra vê cua ham :
+    Nếu hàm return vê một giá trị nào đó thì sau khi goi ham , gia tri return se chưa trong biến $?
+
+
+/************************************************************************************************
+*                                         DEBUG
+************************************************************************************************/
+Một số chú ý để debug những script không chạy:
+  - Dùng lệnh echo để biết được giá trị biến tại nơi mà ta cho là bị lỗi.
+
+  - Sử dụng lệnh tee để kiểm tra dữ liệu tại nơi bị lỗi
+
+  - Sử dụng các option của sh, bash : -n , -v, -x
+      + sh –n scriptname : Kiểm tra lỗI cú pháp (không chạy script).
+                           Tương đương với việc chèn vào script lệnh : set –n hoặc set –o noexec
+
+      + sh –v scriptname: In ra mỗi dòng lệnh trước khi chạy nó.
+                          Tương đương chèn vào script lệnh : set –v hoặc set –o verbose
+
+      + Các  option –n, -v cũng làm việc cùng nhau , bạn có thể gõ lệnh sh –nv scriptname
+
+      + sh –x scriptname: In ra kết quả mỗi lệnh theo lối viết tắt.
+                          Nó tương đương bạn chèn vào scriptlệnh : set –x hoặc set –o xtrace
+
+  - Sử dụng trap để kiểm tra signal lúc exit.
+    Nếu sử dụng phương pháp này thì lệnh trap phải là lệnh đầu tiên của script.
+    Cú pháp : trap { command } { signal }
+
+      Signal            Khi xảy ra
+        0             Thoát khỏI shell
+        1             Hangup
+        2             Interup (Ctrl+C)
+        3             Quit
+        9             Kill
+
+  - dùng lệnh exit; để debug chỗ mình cần.
+
+
+/************************************************************************************************
+*                                         STRING
+************************************************************************************************/
+
++ Chiều dài chuỗi
+
+    ${#string}
+
++ Chuỗi con
+
+    ${string:position}            # Lấy chuỗi con của chuỗi string bắt đầu từ position
+    ${string:position:length}     # Lấy length ký tự từ vị trí position
+
+    ${string#substring}           # Xóa chuôi substring ngăn nhât tinh tư đâu chuôi khoi chuôi string
+    ${string##substring}          # Xóa chuôi substring dài nhât tinh tư đâu chuôi khoi chuôi string
+
+
++ Thay thế chuỗi
+
+    ${string/substring/replacement}         # Thay thế chuôi trung vơi substring băng replacement ( trung lân đâu tiên )
+    ${string//substring/replacement}        # Thay thê tât ca chuôi trung vơi substring băng replacement
+
+    VD:
+        string=abcABC123ABCabc
+        echo ${string/abc/xyz}           # xyzABC123ABCabc
+        echo ${string//abc/xyz}          # xyzABC123ABCxyz
+
+
+
+
+
+
+

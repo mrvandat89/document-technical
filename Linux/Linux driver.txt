@@ -1,0 +1,187 @@
+/*********************************************************************************************
+                                      CƠ BẢN LINUX DRIVER
+**********************************************************************************************/
+  + Một driver sẽ bao gồm 2 phần quan trọng
+        a) giao tiếp với thiết bị (Device-specific)
+        b) giao tiếp với hệ điều hành (OS-specific)
+
+  + Driver trên Linux được phân chia thành 3 loại (phân cấp theo chiều dọc):
+      - Packet-oriented or the network vertical (driver hướng gói dữ liệu)
+      - Block-oriented or the storage vertical (driver hướng khối dữ liệu)
+      - Byte-oriented or the character vertical (driver hướng byte/ký tự)
+
+        Packet-oriented hay network driver gồm 2 phần:
+            a) network protocol stack
+            b) network interface card (NIC) device drivers, hoặc đơn giản là network device driver
+               (có thể là Ethernet, Wi-Fi, hoặc bất kỳ các giao tiếp mạng nào khác...)
+
+        Block-oriented hay storage driver gồm 2 phần:
+            a) File-system drivers để giải mã các định dạng khác nhau trên các phân vùng lưu trữ khác nhau (FAT, ext, …)
+            b) Block device drivers cho các giao thức phần cứng ứng với các thiết bị lưu trữ khác nhau (IDE, SCSI, MTD, …)
+
+        Các Byte-oriented hay character driver lại tiếp tục được phân chia thành các lớp con (sub-classified)
+            VD: tty driver, input driver, console driver, frame-buffer drivers, sound driver,...
+                (tương ứng với các giao tiếp như RS232, PS/2, VGA, I2C, SPI,...)
+
+  + Nạp động driver vào hệ thống
+
+      - Các driver có thể nạp động vào hệ thống thường được xây dựng dựa trên cơ chế modules và được biên dịch tạo thành một file
+        với đuôi mở rộng .ko (kernel object).
+      - Nơi để chứa các modules đã được biên dịch có sẵn, thường được tổ chức trong thư mục:/lib/modules/<kernel_version>/kernel
+         trong đó, <kernel_version>/ là phiên bản nhân hệ thống Linux đang sử dụng.
+
+         $ uname –r  : lấy phiên bản nhân hệ thống Linux đang sử dụng
+
+      Để nạp động, hoặc gỡ một modules, sử dụng các lệnh sau (nằm trong thư mục:/sbin, và cần được thực thi dưới quyền root)
+         § lsmod                    // Liệt kê các modules đã được nạp
+         § insmod <module_file>     // Nạp một module vào hệ thống (yêu cầu modules phụ thuộc nếu có phải được nạp trước)
+         § modprobe <module>        // Nạp một module vào hệ thống (Tự động tìm các module phụ thuộc nếu có để nạp)
+         § rmmod <module>           // Gỡ một module khỏi hệ thống.
+
+  + Hàm printk() : Ghi log thông điệp ra một bộ đệm ở trong tầng nhân.
+      Hàm printk sử dụng các macro để ghép với thông điệp được truyền vào theo sau nó tạo thành một xâu.
+      Bằng cách này xâu tạo ra sẽ được phân loại là thông điệp gì dựa vào 3 ký tự đầu tiên được ghép vào.
+
+      Các macro này được định nghĩa trong linux/kernel.h
+          #define KERN_EMERG  "<0>"    /* system is unusable */
+          #define KERN_ALERT  "<1>"    /* action must be taken immediately */
+          #define KERN_CRIT   "<2>"    /* critical conditions */
+          #define KERN_ERR    "<3>"    /* error conditions */
+          #define KERN_WARNING "<4>"   /* warning conditions */
+          #define KERN_NOTICE "<5>"    /* normal but significant condition */
+          #define KERN_INFO   "<6>"    /* informational */
+          #define KERN_DEBUG  "<7>"    /* debug-level messages */
+
+    Tất cả các lời gọi hàm printk mặc định sẽ ghi thông điệp ra log file: /var/log/messages.
+    Cũng có thể cấu hình để xuất thông điệp ra một đầu ra khác, ví dụ ra cổng nối tiếp (/dev/ttyS0),
+     hoặc ra màn hình console, thường được thực hiện với thông điệp loại KERN_EMERG.
+
+  + Lệnh dmesg để xem thông tin ghi log từ tầng nhân, kết hợp với lệnh tail để giới hạn số dòng muốn xem
+    (do quá nhiều thông tin được log trên hệ thống).
+        $ dmesg | tail -7
+
+  + Sử dụng giá trị trả về cho các hàm ở tầng nhân:
+     - Trong lập trinh ở tầng nhân, cũng cần quan tâm đến việc sử dụng các giá trị trả về cho hàm.
+     - Bất kỳ hàm nào ở tầng nhân cũng cần có kiểm soát lỗi, trả về giá trị thông thường là một số nguyên.
+
+          Nếu có lỗi, hàm trả về giá trị âm, dấu – được định nghĩa trong kernel header linux/errno.h
+          Nếu thành công, hàm nên trả về giá trị 0, hoặc hàm sẽ trả về một giá trị dương,
+            giá trị đó biểu diễn ý nghĩa của thông tin như là số lượng byte dữ liệu được truyền bởi hàm đó.
+
+  + Lập trình C ở tầng nhân là lập trình C thuần.
+    Điều đó có nghĩa là lập trình ở tầng nhân không thể sử dụng các thư viện lập trình chuẩn của C,
+    các hàm chuẩn của ANSI C (như trong stdio.h, string.h, … thường chứa trong /usr/include của trình biên dịch GCC)
+
+    Tuy nhiên, các nhà phát triển nhân hệ điều hành đã đưa vào một tập hợp các hàm như là một thành phần trong mã nguồn nhân.
+    VD: Hàm printk, ... rất nhiều các hàm khác về xâu, bộ nhớ, ... là thành phần có sẵn trong mã nguồn nhân,
+    nằm trong nhiều thư mục khác nhau như kernel, ipc, lib,.. được cung cấp qua các tệp tiêu đề nằm trong thư mục include/linux.
+
+    Có thể cài kernel source bằng cách sử dụng apt-get install linux-source
+
+
+
+/*********************************************************************************************
+                                       CHARACTER DRIVER
+**********************************************************************************************/
+
+    Hầu hết các thiết bị đều thuộc kiểu thiết bị hướng byte (byte-oriented), do vậy hầu hết các device driver là các character device drivers.
+    Ví dụ: serial drivers, audio drivers, video drivers, camera drivers, và các I/O drivers.
+
+  + Việc kết nối từ ứng dụng đến thiết bị được thực hiện hoàn chỉnh thông qua 4 thực thể chính liên quan gồm:
+        1. Application (ứng dụng)
+        2. Character device file (File thiết bị)
+        3. Character device driver (Driver thiết bị)
+        4. Character device (Thiết bị)
+
+
+  + Số hiệu file thiết bị (Major và minor number)
+      Việc kết nối giữa ứng dụng và file thiết bị được thực hiện thông qua tên file thiết bị.
+      Tuy nhiên, kết nối giữa file thiết bị và device driver được thực hiện dựa trên số hiệu của file thiết bị chứ không thông qua tên file
+      Các số hiệu file thiết bị này thường được biết đến như là một cặp số <major, minor> hoặc số hiệu major, minor của file thiết bị.
+
+  + Các hỗ trợ liên quan đến <major, minor> trong kernel
+      - Sử dụng kiểu dữ liệu (định nghĩa trong  linux/types.h):
+          §  dev_t chứa cả số hiệu major và minor
+
+      - Sử dụng các Macros (định nghĩa trong linux/kdev_t.h):
+          §  MAJOR(dev_t dev) lấy số hiệu major từ tham số dev
+          §  MINOR(dev_t dev) lấy số hiệu minor từ tham số dev
+          §  MKDEV(int major, int minor) tạo ra dữ liệu dev từ cặp số hiệu major và minor.
+
+  + Việc kết nối giữa file thiết bị và driver được thực hiện thông qua 2 bước sau:
+        1. Đăng ký số hiệu <major, minor> cho file thiết bị
+
+                Sử dụng một trong 2 hàm API sau: (được định nghĩa trong linux/fs.h):
+                    + int register_chrdev_region(dev_t first, unsigned int cnt, char *name);
+                    + int alloc_chrdev_region(dev_t *first, unsigned int firstminor, unsigned int cnt, char *name);
+
+                    $ cat /proc/devices           # Liệt kê tên và các số hiệu major đã được đăng ký.
+
+                    $ ls -l /dev/ | grep "^c"     # Liệt kê các file thiết bị kiểu character khác nhau trên hệ thống:
+
+        2. Kết nối các thao tác file thiết bị với các hàm tương ứng trong driver.
+
+
+/*********************************************************************************************
+                                      CHARACTER DEVICE FILES
+**********************************************************************************************/
+
+   Trong phần trước, chúng ta đã đề cập đến việc đăng ký số hiệu file thiết bị <major, minor> trong driver,
+   tuy nhiên, file thiết bị chưa được tự động tạo ra trong thư mục /dev của hệ thống mà cần thực hiện tạo bằng tay sử dụng lệnh mknod.
+   => Tạo file thiết bị tự động
+
+1. TẠO FILE THIẾT BỊ TỰ ĐỘNG: ( khai báo trong <linux/device.h> )
+
+    - Lớp thiết bị (device class) được tạo ra như sau:
+          struct class *cl = class_create(THIS_MODULE, "<device class name>");
+
+    - Sau đó, thông tin (<major, minor>)  của thiết bị trong lớp này được tạo ra bởi hàm API
+          device_create(cl, NULL, first, NULL, "<device name format>", ...);
+
+    - Trong đó, biến first có kiểu dev_t  tương ứng với cặp giá trị <major, minor>. Khi hủy lớp thiết bị, thứ tự thực hiện là ngược lại:
+          device_destroy(cl, first);
+          class_destroy(cl);
+
+    - Trong trường hợp có nhiều số hiệu minors, các hàm API device_create() và device_destroy() có thể đặt trong vòng lặp,
+      và có thể sử dụng chuỗi <device name format>.
+          device_create(cl, NULL, MKNOD(MAJOR(first), MINOR(first) + i), NULL, "mynull%d", i);
+
+
+2. CÁC THAO TÁC VỚI FILE THIẾT BỊ: (File operations)
+
+  - Tất cả những lời gọi hệ thống (hay thao tác file) đối với một file thông thường đều có thể áp dụng cho file thiết bị.
+  - Đứng trên phương diện không gian người dùng, hầu hết mọi thứ đều là một file.
+  - Điều khác biệt nằm ở tầng nhân hệ điều hành, trong đó hệ thống file ảo (virtual file system – VFS) sẽ giải mã các loại file
+    và diễn giải các thao tác file truyền đến driver thiết bị tương ứng đối với file thiết bị.
+
+  - Để VFS truyền các thao tác file thiết bị (file operations) vào driver, nó phải được thông báo về các thao tác đó.
+  - Việc làm này chính là đăng ký các thao tác file với VFS được thực hiện trong mã nguồn driver. Quá trình này bao gồm 2 bước:
+
+        B1: Tạo ra biến cấu trúc struct file_operations pugs_fops và điền vào cấu trúc này các thao tác xử lý muốn dùng đối với file thiết bị đang viết driver,
+          các thao tác thông thường như: my_open, my_close, my_read, my_write, … và khởi tạo một cấu trúc thiết bị kiểu character
+          bằng cách khai báo biến cấu trúc struct cdev c_dev và gọi hàm cdev_init().
+
+        B2: Điều khiển cấu trúc này đến hệ thống file ảo VFS bằng cách gọi hàm cdev_add().
+          Các hàm cdev_init() và cdev_add() được khai báo trong <linux/cdev.h>
+
+a. Thao tác đọc file thiết bị
+
+  - Khi người sử dụng muốn đọc dữ liệu từ file thiết bị /dev/mynull, lời gọi hàm đọc (là một system call) sẽ truyền đến hệ thống file ảo VFS ở tầng nhân.
+  - VFS sẽ giải mã cặp số hiệu <major, minor> và tìm ra driver cần thiết để triệu gọi hàm my_read() của driver này
+    (hàm đã được đăng ký với thao tác read cùa file thiết bị).
+  - Hàm này trả về giá trị là bao nhiêu byte dữ liệu nhận được đối với yêu cầu đọc từ người sử dụng file thiết bị.
+
+  - Từ các tham số của hàm này cho biết rằng dữ liệu nên được ghi vào bộ đệm buf để đưa lên tầng ứng dụng, tham số len cho biết kích thước (tính theo byte)
+    của bộ đệm dữ liệu được yêu cầu bởi người dùng khi đọc.
+  - Thông thường, nên cung cấp số lượng ít hơn hoặc bằng len bytes dữ liệu vào bộ đệm buf, và số lượng byte đưa vào thật sự cũng được dùng làm giá trị trả về cho hàm.
+
+  - Trong thao tác đọc, người lập trình driver sẽ điền dữ liệu lấy từ thiết bị thật vào bộ đệm dữ liệu được yêu cầu bởi người sử dụng
+    để người sử dụng có thể nhận được chúng từ trên tầng ứng dụng.
+
+
+b. Thao tác ghi file thiết bị
+
+  - Ngược lại với thao tác đọc là thao tác ghi dữ liệu vào file thiết bị.
+  - Người sử dụng sẽ cung cấp một kích thước len byte dữ liệu (tham số thứ 3 của hàm my_write()) để ghi nằm trong bộ đệm buf (tham số thứ 2 của hàm my_write()).
+  - Hàm my_write() sẽ nhận dữ liệu đó từ bộ đệm mà người sử dụng cung cấp để ghi nó ra thiết bị thật, số byte thực sự ghi thành công
+    cũng sẽ được dùng làm giá trị trả về của hàm.
